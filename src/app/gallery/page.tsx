@@ -38,6 +38,7 @@ export default function GalleryPage() {
       // Convert array of {category, links} to object for compatibility
       const videosObj: { [key: string]: string[] } = {};
       data.forEach((row: { category: string, links: any }) => {
+        if (row.category === "Homepage Gallery Videos") return;
         // Handle nested links object from Supabase
         if (row.links && Array.isArray(row.links.links)) {
           videosObj[row.category] = row.links.links;
@@ -48,7 +49,7 @@ export default function GalleryPage() {
         }
       });
       setVideosData(videosObj);
-      const cats = Object.keys(videosObj);
+      const cats = Object.keys(videosObj).sort((a, b) => a.localeCompare(b));
       setCategories(cats);
       if (cats.length > 0) {
         setSelectedCategory(cats[0]);
@@ -70,7 +71,15 @@ export default function GalleryPage() {
   }, [selectedCategory, videosData]);
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-blue-950 text-white flex flex-col items-center py-20 px-4">
+    <main
+      className="min-h-screen text-white flex flex-col items-center py-20 px-4"
+      style={{
+        backgroundImage: 'url(/gallery-bg.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
       <h1 className="text-5xl font-extrabold mb-6">Gallery</h1>
       <div className="mb-8">
         <label htmlFor="category" className="mr-2 text-lg font-semibold">Select Category:</label>

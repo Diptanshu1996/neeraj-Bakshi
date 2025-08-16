@@ -27,7 +27,7 @@ export async function POST(request: Request) {
   }
   const { data, error } = await supabase
     .from('gallery_videos')
-    .upsert([{ category, links }]);
+    .upsert([{ category, links }], { onConflict: 'category' });
   if (error) {
     console.error('Supabase POST error:', error);
     return NextResponse.json({ error }, { status: 500 });

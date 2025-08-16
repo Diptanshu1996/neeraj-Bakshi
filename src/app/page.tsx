@@ -4,6 +4,8 @@ import React, { useState, useRef, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFacebook, faInstagram, faYoutube } from "@fortawesome/free-brands-svg-icons";
 
+import HomepageGallerySection from "../components/HomepageGallerySection";
+
 export default function Home() {
   // Removed video background, replaced with hero image
   return (
@@ -48,19 +50,13 @@ export default function Home() {
           >
             NEERAJ BAKSHI
           </h1>
-          {/* <p className="text-2xl md:text-3xl mb-8 max-w-2xl mx-auto font-bold text-pink-500 drop-shadow">
-            Live Singer | Bollywood | Sufi | Punjabi | Weddings | Corporate |
-            Festivals | Dandiya
-          </p> */}
-          {/* Animated Social Media Icons */}
           <div className="w-full flex flex-col items-center mb-2">
             <div className="rounded-full px-8 py-2 mb-1 bg-gradient-to-r from-red-500 via-purple-500 to-pink-500 flex items-center justify-center">
               <h3
                 className="text-lg font-extrabold text-center text-white drop-shadow"
                 style={{ fontSize: "1rem" }}
               >
-                Live Singer | Bollywood | Sufi | Punjabi | Weddings | Corporate
-                | Festivals | Dandiya
+                Singer | Performer | Entertainer
                 <br />
               </h3>
             </div>
@@ -177,7 +173,8 @@ export default function Home() {
           </div>
         </div>
       </section>
-      {/* Testimonials Section */}
+  <HomepageGallerySection />
+  {/* Testimonials Section */}
       <section className="w-full py-16 px-4 bg-gray-950 text-white flex flex-col items-center">
         <h2 className="text-3xl font-bold mb-8">Testimonials</h2>
         <div className="flex flex-col md:flex-row gap-8 justify-center">

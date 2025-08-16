@@ -54,9 +54,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             <div className="flex gap-6 text-sm">
               <a href="/" className="hover:underline">Home</a>
               <a href="/#about-me" className="hover:underline">About Us</a>
-              <a href="/team" className="hover:underline">Our Team</a>
               <a href="/gallery" className="hover:underline">Gallery</a>
-              <a href="/music" className="hover:underline">Music</a>
               <a href="/booking" className="hover:underline">Booking</a>
             </div>
             <div className="flex gap-4">

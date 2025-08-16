@@ -21,9 +21,7 @@ export default function Navbar() {
         <ul className="flex gap-8 text-lg font-semibold">
           <li><a href="/" className="hover:underline text-white">Home</a></li>
           <li><a href="/#about-me" className="hover:underline text-white">About Us</a></li>
-          <li><a href="/#team" className="hover:underline text-white">Our Team</a></li>
           <li><a href="/gallery" className="hover:underline text-white">Gallery</a></li>
-          <li><a href="/music" className="hover:underline text-white">Music</a></li>
         </ul>
       </div>
       {/* Burger Icon - Mobile - top left */}
@@ -58,9 +56,7 @@ export default function Navbar() {
             <ul className="flex flex-col gap-8 text-2xl font-semibold mt-8">
               <li><a href="/" className="hover:underline text-white" onClick={() => setMenuOpen(false)}>Home</a></li>
               <li><a href="#about-me" className="hover:underline text-white" onClick={() => setMenuOpen(false)}>About Us</a></li>
-              <li><a href="/team" className="hover:underline text-white" onClick={() => setMenuOpen(false)}>Our Team</a></li>
               <li><a href="/gallery" className="hover:underline text-white" onClick={() => setMenuOpen(false)}>Gallery</a></li>
-              <li><a href="/music" className="hover:underline text-white" onClick={() => setMenuOpen(false)}>Music</a></li>
               <li>
                 <a href="#contact-info" className="w-36 h-12 flex items-center justify-center rounded-full bg-gradient-to-r from-purple-600 via-pink-500 to-blue-500 text-white text-base font-semibold shadow-xl transition-all duration-300 hover:scale-110 hover:shadow-pink-500/40 hover:shadow-2xl hover:bg-gradient-to-r hover:from-pink-500 hover:via-purple-600 hover:to-blue-500 relative overflow-hidden gap-2" onClick={() => setMenuOpen(false)}>
                   <span className="relative z-10 flex items-center gap-2">

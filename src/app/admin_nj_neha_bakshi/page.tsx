@@ -26,6 +26,11 @@ export default function AdminGallery() {
   const handleSave = async () => {
     try {
       const linksArr = links.split(",").map(l => l.trim()).filter(l => l);
+      if (category === "Homepage Gallery Videos" && linksArr.length === 0) {
+        alert("At least 1 video link is required for Homepage Gallery Videos.");
+        setStatus("At least 1 video link is required for Homepage Gallery Videos.");
+        return;
+      }
       const res = await fetch("/api/gallery", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -68,7 +73,7 @@ export default function AdminGallery() {
   return (
     <main className="min-h-screen bg-gray-900 text-white flex flex-col items-center py-20 px-4">
       <h1 className="text-4xl font-bold mb-6">Admin: Gallery CRUD (Supabase)</h1>
-      <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-12">
         {/* Left: Form */}
         <div className="flex flex-col gap-4 bg-gray-800 p-6 rounded shadow">
           <label htmlFor="category" className="font-semibold mb-1">Select Category</label>
@@ -116,6 +121,11 @@ export default function AdminGallery() {
             onClick={async () => {
               if (!newCategory.trim()) return setStatus("Category name required");
               const linksArr = newLinks.split(",").map(l => l.trim()).filter(l => l);
+              if (newCategory === "Homepage Gallery Videos" && linksArr.length === 0) {
+                alert("At least 1 video link is required for Homepage Gallery Videos.");
+                setStatus("At least 1 video link is required for Homepage Gallery Videos.");
+                return;
+              }
               const res = await fetch("/api/gallery", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -139,11 +149,16 @@ export default function AdminGallery() {
             {videos.map(v => (
               <div key={v.category} className="mb-4">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="font-semibold text-lg text-blue-400 mr-2 cursor-pointer" onClick={() => handleSelectCategory(v.category)}>{v.category}</span>
-                  <button
-                    className="bg-red-600 text-white px-2 py-1 rounded text-xs font-bold hover:bg-red-700 ml-2"
-                    onClick={() => handleDelete(v.category)}
-                  >Delete</button>
+                  <span
+                    className={`font-semibold text-lg mr-2 cursor-pointer ${v.category === "Homepage Gallery Videos" ? "text-green-400" : "text-blue-400"}`}
+                    onClick={() => handleSelectCategory(v.category)}
+                  >{v.category}</span>
+                  {v.category !== "Homepage Gallery Videos" && (
+                    <button
+                      className="bg-red-600 text-white px-2 py-1 rounded text-xs font-bold hover:bg-red-700 ml-2"
+                      onClick={() => handleDelete(v.category)}
+                    >Delete</button>
+                  )}
                 </div>
                 <ul className="ml-4 list-disc">
                   {(v.links?.links ?? []).map((link: string, idx: number) => (
