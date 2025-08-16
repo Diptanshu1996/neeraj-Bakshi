@@ -5,86 +5,53 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFacebook, faInstagram, faYoutube } from "@fortawesome/free-brands-svg-icons";
 
 export default function Home() {
-  const [muted, setMuted] = useState(true); // Start muted for autoplay
-  const videoRef = useRef<HTMLVideoElement>(null);
-  useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.muted = muted;
-    }
-  }, [muted]);
-  const handleMuteToggle = () => {
-    setMuted((prevMuted) => !prevMuted);
-  };
+  // Removed video background, replaced with hero image
   return (
     <main className="min-h-screen w-full bg-gradient-to-br from-[#0f2027] via-[#2c5364] to-[#1c1c1c] flex flex-col items-center justify-center text-white font-sans relative overflow-hidden">
+      <style jsx global>{`
+        html,
+        body {
+          overflow-x: hidden !important;
+        }
+      `}</style>
       {/* Animated Gradient Overlay */}
       <div className="absolute inset-0 z-0 animate-gradient bg-gradient-to-r from-pink-500 via-blue-500 to-purple-600 opacity-30"></div>
       {/* Hero Section */}
       <section className="w-full flex flex-col items-center justify-center py-24 px-4 text-center relative z-10 min-h-[700px]">
-        {/* Mute button outside pointer-events: none container */}
-        <button
-          onClick={handleMuteToggle}
-          style={{
-            position: 'absolute',
-            top: 80,
-            right: 20,
-            zIndex: 50,
-            background: 'rgba(0,0,0,0.5)',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '50%',
-            width: 80,
-            height: 80,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            fontSize: 50,
-            pointerEvents: 'auto',
-          }}
-          aria-label={muted ? 'Unmute video' : 'Mute video'}
-        >
-          {muted ? '🔇' : '🔊'}
-        </button>
         <div className="absolute inset-0 w-full h-full z-0 pointer-events-none">
-          <div style={{ position: 'relative', width: '100%', height: '100vh', overflow: 'hidden' }}>
-              <video
-                ref={videoRef}
-                autoPlay
-                loop
-                playsInline
-                src="/bg-video.mp4"
-                muted={muted}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  zIndex: -1,
-                }}
-                onLoadedMetadata={() => {
-                  if (videoRef.current) {
-                    videoRef.current.currentTime = 3;
-                  }
-                }}
-              />
-          </div>
+          <img
+            src="/hero-bg.JPG"
+            alt="Hero Background"
+            className="w-full h-full object-cover"
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              objectPosition: "top",
+              zIndex: -1,
+              minHeight: "700px",
+              minWidth: "100vw",
+              maxWidth: "100vw",
+              maxHeight: "100vh",
+            }}
+          />
         </div>
         <div className="relative">
           <h1
-            className="text-[2.875rem] md:text-[6.9rem] font-extrabold tracking-tight font-gitar mt-60 text-white uppercase"
+            className="text-[2.875rem] md:text-[6.9rem] font-extrabold tracking-tight font-gitar mt-80 text-white uppercase"
             style={{
               textShadow: "0 2px 6px #000, 0 0 2px #000, 1px 1px 0 #000",
             }}
           >
             NEERAJ BAKSHI
           </h1>
-          <p className="text-base md:text-xl mb-8 max-w-2xl mx-auto drop-shadow font-bold">
+          {/* <p className="text-2xl md:text-3xl mb-8 max-w-2xl mx-auto font-bold text-pink-500 drop-shadow">
             Live Singer | Bollywood | Sufi | Punjabi | Weddings | Corporate |
             Festivals | Dandiya
-          </p>
+          </p> */}
           {/* Animated Social Media Icons */}
           <div className="w-full flex flex-col items-center mb-2">
             <div className="rounded-full px-8 py-2 mb-1 bg-gradient-to-r from-red-500 via-purple-500 to-pink-500 flex items-center justify-center">
@@ -92,7 +59,8 @@ export default function Home() {
                 className="text-lg font-extrabold text-center text-white drop-shadow"
                 style={{ fontSize: "1rem" }}
               >
-                Find me online
+                Live Singer | Bollywood | Sufi | Punjabi | Weddings | Corporate
+                | Festivals | Dandiya
                 <br />
               </h3>
             </div>
@@ -176,16 +144,35 @@ export default function Home() {
           {/* Right Column: Text */}
           <div className="w-full md:w-[70%] text-lg font-light leading-relaxed text-left">
             <p>
-              <strong>Neeraj Bakshi – Indian Idol Fame &amp; Powerhouse Performer</strong><br /><br />
-              Neeraj Bakshi is known for his versatile voice and electrifying stage presence.<br />
-              He blends emotion and energy, captivating audiences worldwide.<br />
-              His Punjabi hits "Supna",<a href="https://www.youtube.com/watch?v=ViXnFM6c4e8" className="underline text-red-400" target="_blank" rel="noopener noreferrer"> Fail Kare Garmi</a>, and "Peg Mukni Ni" have won many hearts.<br />
-              Neeraj’s voice has graced radio, television, and countless live concerts.<br />
-              With over 1,000 shows globally, he is a household name among music lovers.<br />
-              His journey is a testament to passion, dedication, and unmatched talent.<br />
-              Whether it’s a soulful melody or a high-energy number, Neeraj leaves every stage on fire.<br />
-              He has performed at weddings, corporate events, and festivals.<br />
-              Fans admire his ability to connect with every audience.<br />
+              <strong>
+                Neeraj Bakshi – Indian Idol Fame &amp; Powerhouse Performer
+              </strong>
+              <br />
+              <br />
+              Neeraj Bakshi is known for his versatile voice and electrifying
+              stage presence.
+              <br />
+              He blends emotion and energy, captivating audiences worldwide.
+              <br />
+              His Punjabi hits "Supna", "Fail Kare Garmi", and "Peg Mukni Ni"
+              have won many hearts.
+              <br />
+              Neeraj’s voice has graced radio, television, and countless live
+              concerts.
+              <br />
+              With over 1,000 shows globally, he is a household name among music
+              lovers.
+              <br />
+              His journey is a testament to passion, dedication, and unmatched
+              talent.
+              <br />
+              Whether it’s a soulful melody or a high-energy number, Neeraj
+              leaves every stage on fire.
+              <br />
+              He has performed at weddings, corporate events, and festivals.
+              <br />
+              Fans admire his ability to connect with every audience.
+              <br />
             </p>
           </div>
         </div>
@@ -216,7 +203,7 @@ export default function Home() {
               <br />
               Highly recommend his concerts!"
             </p>
-            <span className="font-semibold">Diptanshu Pandey</span>
+            <span className="font-semibold">Venkatesh</span>
           </div>
           <div className="bg-gray-900 p-6 rounded-lg shadow max-w-md">
             <p className="italic mb-4">
@@ -228,7 +215,7 @@ export default function Home() {
               <br />
               Neeraj truly rocks the stage!"
             </p>
-            <span className="font-semibold">Aarti Wadhwa</span>
+            <span className="font-semibold">Diptanshu Pandey</span>
           </div>
         </div>
       </section>
@@ -291,15 +278,30 @@ export default function Home() {
           <span>|</span>
           <span>
             Follow on{" "}
-            <a href="https://www.instagram.com/neerajbakshiofficial" className="text-blue-400 hover:underline" target="_blank" rel="noopener noreferrer">
+            <a
+              href="https://www.instagram.com/neerajbakshiofficial"
+              className="text-blue-400 hover:underline"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               Instagram
             </a>
             ,{" "}
-            <a href="https://www.facebook.com/singeperformerrneerajbakshi" className="text-pink-400 hover:underline" target="_blank" rel="noopener noreferrer">
+            <a
+              href="https://www.facebook.com/singeperformerrneerajbakshi"
+              className="text-pink-400 hover:underline"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               Facebook
             </a>
             ,{" "}
-            <a href="https://youtube.com/@neerajbakshi?si=h7CJ-oHNp8xmsphB" className="text-red-400 hover:underline" target="_blank" rel="noopener noreferrer">
+            <a
+              href="https://youtube.com/@neerajbakshi?si=h7CJ-oHNp8xmsphB"
+              className="text-red-400 hover:underline"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               YouTube
             </a>
           </span>

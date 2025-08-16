@@ -25,6 +25,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="/favicon.png" />
+      </head>
     <body
       className={`${geistSans.variable} ${geistMono.variable} antialiased text-black relative`}
       style={{ minHeight: '100vh', background: 'transparent' }}
@@ -50,7 +53,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             <div className="text-lg font-bold">Neeraj Bakshi</div>
             <div className="flex gap-6 text-sm">
               <a href="/" className="hover:underline">Home</a>
-              <a href="#about-me" className="hover:underline">About Us</a>
+              <a href="/#about-me" className="hover:underline">About Us</a>
               <a href="/team" className="hover:underline">Our Team</a>
               <a href="/gallery" className="hover:underline">Gallery</a>
               <a href="/music" className="hover:underline">Music</a>
