@@ -1,28 +1,76 @@
 
 "use client";
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFacebook, faInstagram, faYoutube } from "@fortawesome/free-brands-svg-icons";
 
 export default function Home() {
+  const [muted, setMuted] = useState(true); // Start muted for autoplay
+  const videoRef = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.muted = muted;
+    }
+  }, [muted]);
+  const handleMuteToggle = () => {
+    setMuted((prevMuted) => !prevMuted);
+  };
   return (
     <main className="min-h-screen w-full bg-gradient-to-br from-[#0f2027] via-[#2c5364] to-[#1c1c1c] flex flex-col items-center justify-center text-white font-sans relative overflow-hidden">
       {/* Animated Gradient Overlay */}
       <div className="absolute inset-0 z-0 animate-gradient bg-gradient-to-r from-pink-500 via-blue-500 to-purple-600 opacity-30"></div>
       {/* Hero Section */}
       <section className="w-full flex flex-col items-center justify-center py-24 px-4 text-center relative z-10 min-h-[700px]">
+        {/* Mute button outside pointer-events: none container */}
+        <button
+          onClick={handleMuteToggle}
+          style={{
+            position: 'absolute',
+            top: 80,
+            right: 20,
+            zIndex: 50,
+            background: 'rgba(0,0,0,0.5)',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '50%',
+            width: 80,
+            height: 80,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            fontSize: 50,
+            pointerEvents: 'auto',
+          }}
+          aria-label={muted ? 'Unmute video' : 'Mute video'}
+        >
+          {muted ? '🔇' : '🔊'}
+        </button>
         <div className="absolute inset-0 w-full h-full z-0 pointer-events-none">
-          <img
-            src="/hero-bg.JPG"
-            alt="Neeraj Bakshi Hero"
-            className="w-full h-full object-cover opacity-40"
-            style={{
-              height: "100%",
-              width: "100%",
-              objectFit: "cover",
-              objectPosition: "center top",
-            }}
-          />
+          <div style={{ position: 'relative', width: '100%', height: '100vh', overflow: 'hidden' }}>
+              <video
+                ref={videoRef}
+                autoPlay
+                loop
+                playsInline
+                src="/bg-video.mp4"
+                muted={muted}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  zIndex: -1,
+                }}
+                onLoadedMetadata={() => {
+                  if (videoRef.current) {
+                    videoRef.current.currentTime = 3;
+                  }
+                }}
+              />
+          </div>
         </div>
         <div className="relative">
           <h1
