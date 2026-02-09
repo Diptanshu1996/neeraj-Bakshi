@@ -1,7 +1,16 @@
+import Image from "next/image";
 
 export default function AboutPage() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-blue-950 text-white flex flex-col items-center py-20 px-4">
+      <Image
+        src="/profile_about_2026.JPG"
+        alt="Neeraj Bakshi About"
+        width={320}
+        height={320}
+        className="rounded-full shadow-2xl mb-8 object-cover"
+        priority={true}
+      />
       <h1 className="text-5xl font-extrabold mb-6">About Neeraj Bakshi</h1>
       <p className="text-xl max-w-2xl mb-8">Neeraj Bakshi is a renowned singer known for his energetic performances and soulful voice. With over a decade of experience, he has captivated audiences at festivals, concerts, and private events across the globe. His music blends emotion, artistry, and passion, making every show unforgettable.</p>
       <div className="flex gap-4 mt-6">
