@@ -53,7 +53,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             <div className="text-lg font-bold">Neeraj Bakshi</div>
             <div className="flex gap-6 text-sm">
               <a href="/" className="hover:underline">Home</a>
-              <a href="/#about-me" className="hover:underline">About Myself</a>
+              <a href="/#about-me" className="hover:underline">About Us</a>
               <a href="/gallery" className="hover:underline">Gallery</a>
               <a href="/booking" className="hover:underline">Booking</a>
             </div>
