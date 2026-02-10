@@ -3,173 +3,242 @@ import React, { useState, useEffect } from "react";
 
 export default function AdminGallery() {
   const [status, setStatus] = useState("");
-  const [videos, setVideos] = useState<any[]>([]);
-  const [category, setCategory] = useState("");
-  const [links, setLinks] = useState<string>("");
-  const [newCategory, setNewCategory] = useState("");
-  const [newLinks, setNewLinks] = useState("");
+  const [categories, setCategories] = useState<any[]>([]);
+  const [selectedCategoryIdx, setSelectedCategoryIdx] = useState<number>(-1);
+  const [newCatName, setNewCatName] = useState("");
+  const [newCatLinks, setNewCatLinks] = useState("");
+  const [editingCatName, setEditingCatName] = useState<string | null>(null);
+  const [linkEdits, setLinkEdits] = useState<{[catIdx:number]: {[linkIdx:number]: string}} | {}>({});
 
+  // Fetch initial categories
   useEffect(() => {
-    async function fetchGallery() {
-      const res = await fetch("/api/gallery");
-      const data = await res.json();
-      const arr = Array.isArray(data) ? data : [];
-      setVideos(arr);
-      if (arr.length > 0) {
-        setCategory(arr[0].category);
-        setLinks(((arr[0].links?.links ?? [])).join(", "));
-      }
-    }
     fetchGallery();
   }, [status]);
 
-  const handleSave = async () => {
+  async function fetchGallery() {
+    const res = await fetch("/api/gallery");
     try {
-      const linksArr = links.split(",").map(l => l.trim()).filter(l => l);
-      if (category === "Homepage Gallery Videos" && linksArr.length === 0) {
-        alert("At least 1 video link is required for Homepage Gallery Videos.");
-        setStatus("At least 1 video link is required for Homepage Gallery Videos.");
-        return;
-      }
-      const res = await fetch("/api/gallery", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category, links: { links: linksArr } })
-      });
-      if (res.ok) {
-        setStatus("Saved successfully!");
-      } else {
-        setStatus("Failed to save.");
-      }
+      const arr = await res.json();
+      setCategories(Array.isArray(arr) ? arr : []);
     } catch {
-      setStatus("Error saving data.");
+      setCategories([]);
     }
-  };
+  }
 
-  const handleDelete = async (cat: string) => {
-    if (!window.confirm(`Are you sure you want to delete the category '${cat}' and all its links?`)) return;
-    try {
-      const res = await fetch("/api/gallery", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category: cat, deleteCategory: true })
-      });
-      if (res.ok) {
-        setStatus("Category deleted!");
-      } else {
-        setStatus("Failed to delete.");
-      }
-    } catch {
-      setStatus("Error deleting category.");
+  // --- CRUD Actions ---
+  async function saveCategory(catIdx:number) {
+    const cat = categories[catIdx];
+    if (!cat) return;
+    const res = await fetch("/api/gallery", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(cat)
+    });
+    setStatus(res.ok ? "Saved changes!" : "Failed to save");
+  }
+
+  async function deleteCategory(catIdx:number) {
+    const cat = categories[catIdx];
+    if (!cat) return;
+    if (!window.confirm(`Delete category '${cat.category}' and all links?`)) return;
+    const res = await fetch("/api/gallery", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({category: cat.category, deleteCategory: true})
+    });
+    if (res.ok) {
+      setStatus("Category deleted!");
+      setSelectedCategoryIdx(-1);
+    } else setStatus("Failed to delete");
+  }
+
+  async function addCategory() {
+    if (!newCatName.trim()) return setStatus("Category name required");
+    const linksArr = newCatLinks.split(",").map(x=>x.trim()).filter(Boolean);
+    const res = await fetch("/api/gallery", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({category: newCatName, links: {links: linksArr}})
+    });
+    setStatus(res.ok ? "Category added!" : "Failed to add category");
+    setNewCatName(""); setNewCatLinks("");
+  }
+
+  async function renameCategory(catIdx:number) {
+    const cat = categories[catIdx];
+    if (!cat || !editingCatName || editingCatName === cat.category) {
+      setEditingCatName(null); return;
     }
-  };
+    // create new, copy links, delete old
+    const linksArr = (cat.links?.links ?? []);
+    await fetch("/api/gallery", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({category: editingCatName, links: {links: linksArr}})
+    });
+    await fetch("/api/gallery", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({category: cat.category, deleteCategory: true})
+    });
+    setStatus("Category renamed");
+    setEditingCatName(null);
+    setSelectedCategoryIdx(-1);
+  }
 
-  const handleSelectCategory = (cat: string) => {
-  setCategory(cat);
-  const found = videos.find(v => v.category === cat);
-  setLinks(((found?.links?.links ?? [])).join(", "));
-  };
+  // ----- Per-link CRUD -----
+  function handleLinkEdit(catIdx:number, linkIdx:number, value:string) {
+    setLinkEdits(edits => ({
+      ...edits,
+      [catIdx]: {...(edits[catIdx] ?? {}), [linkIdx]: value },
+    }));
+  }
 
+  async function saveLink(catIdx:number, linkIdx:number) {
+    const editsCat = (linkEdits as any)[catIdx] || {};
+    if (!editsCat[linkIdx]) return;
+    const cat = {...categories[catIdx]};
+    cat.links.links[linkIdx] = editsCat[linkIdx];
+    await fetch("/api/gallery", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(cat)
+    });
+    setStatus("Link updated");
+    setLinkEdits(edits => ({ ...edits, [catIdx]: {...edits[catIdx], [linkIdx]: undefined } }));
+  }
+
+  async function deleteLink(catIdx:number, linkIdx:number) {
+    if (!window.confirm("Delete this link?")) return;
+    const cat = {...categories[catIdx]};
+    cat.links.links.splice(linkIdx, 1);
+    await fetch("/api/gallery", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(cat)
+    });
+    setStatus("Link deleted");
+  }
+
+  async function addLink(catIdx:number, newLink:string) {
+    if (!newLink.trim()) return;
+    const cat = {...categories[catIdx]};
+    cat.links.links.push(newLink.trim());
+    await fetch("/api/gallery", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(cat)
+    });
+    setStatus("Link added");
+  }
+
+  // --- Render ---
   return (
-    <main className="min-h-screen bg-gray-900 text-white flex flex-col items-center py-20 px-4">
-      <h1 className="text-4xl font-bold mb-6">Admin: Gallery CRUD (Supabase)</h1>
-      <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-12">
-        {/* Left: Form */}
-        <div className="flex flex-col gap-4 bg-gray-800 p-6 rounded shadow">
-          <label htmlFor="category" className="font-semibold mb-1">Select Category</label>
-          <select
-            id="category"
-            value={category}
-            onChange={e => handleSelectCategory(e.target.value)}
-            className="w-full p-4 rounded bg-gray-900 text-white border border-gray-700"
-            required
-          >
-            {videos.map(v => (
-              <option key={v.category} value={v.category}>{v.category}</option>
-            ))}
-          </select>
-          <label htmlFor="links" className="font-semibold mb-1">Edit Video Links (comma separated)</label>
-          <textarea
-            id="links"
-            value={links}
-            onChange={e => setLinks(e.target.value)}
-            rows={6}
-            className="w-full p-4 rounded bg-gray-900 text-white border border-gray-700"
-            placeholder="Enter video links, comma separated"
-            required
-          />
-          <button type="button" className="bg-blue-600 px-6 py-2 rounded font-bold" onClick={handleSave}>Save</button>
-          <hr className="my-6 border-gray-700" />
-          <h2 className="text-lg font-bold mb-2">Add New Category</h2>
+    <main className="min-h-screen bg-gray-900 text-white flex flex-col items-center py-16 px-2">
+      <h1 className="text-3xl font-bold mb-6">Admin: Gallery CRUD (JSON backend)</h1>
+      <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-10">
+        {/* Left: Add category */}
+        <div className="bg-gray-800 p-6 rounded shadow flex flex-col gap-4">
+          <h2 className="font-bold text-lg">Add New Category</h2>
           <input
             type="text"
-            value={newCategory}
-            onChange={e => setNewCategory(e.target.value)}
-            className="w-full p-4 rounded bg-gray-900 text-white border border-gray-700 mb-2"
+            value={newCatName}
+            onChange={e => setNewCatName(e.target.value)}
+            className="w-full p-2 rounded bg-gray-900 text-white border border-gray-700 mb-2"
             placeholder="New category name"
           />
           <textarea
-            value={newLinks}
-            onChange={e => setNewLinks(e.target.value)}
-            rows={4}
-            className="w-full p-4 rounded bg-gray-900 text-white border border-gray-700 mb-2"
+            value={newCatLinks}
+            onChange={e => setNewCatLinks(e.target.value)}
+            rows={2}
+            className="w-full p-2 rounded bg-gray-900 text-white border border-gray-700 mb-2"
             placeholder="Video links, comma separated"
           />
           <button
-            type="button"
-            className="bg-green-600 px-6 py-2 rounded font-bold"
-            onClick={async () => {
-              if (!newCategory.trim()) return setStatus("Category name required");
-              const linksArr = newLinks.split(",").map(l => l.trim()).filter(l => l);
-              if (newCategory === "Homepage Gallery Videos" && linksArr.length === 0) {
-                alert("At least 1 video link is required for Homepage Gallery Videos.");
-                setStatus("At least 1 video link is required for Homepage Gallery Videos.");
-                return;
-              }
-              const res = await fetch("/api/gallery", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ category: newCategory, links: { links: linksArr } })
-              });
-              if (res.ok) {
-                setStatus("New category added!");
-                setNewCategory("");
-                setNewLinks("");
-              } else {
-                setStatus("Failed to add category.");
-              }
-            }}
+            className="bg-green-600 px-4 py-1 rounded font-bold"
+            onClick={addCategory}
           >Add Category</button>
-          {status && <div className="mt-2 text-lg">{status}</div>}
+          {status && <div className="mt-2 text-base text-green-300">{status}</div>}
         </div>
-        {/* Right: Category List & Delete */}
+        {/* Right: Browse/Edit Categories */}
         <div className="bg-gray-800 p-6 rounded shadow">
-          <h2 className="text-2xl font-bold mb-4">Categories</h2>
-          <div className="space-y-4">
-            {videos.map(v => (
-              <div key={v.category} className="mb-4">
-                <div className="flex items-center justify-between mb-1">
-                  <span
-                    className={`font-semibold text-lg mr-2 cursor-pointer ${v.category === "Homepage Gallery Videos" ? "text-green-400" : "text-blue-400"}`}
-                    onClick={() => handleSelectCategory(v.category)}
-                  >{v.category}</span>
-                  {v.category !== "Homepage Gallery Videos" && (
-                    <button
-                      className="bg-red-600 text-white px-2 py-1 rounded text-xs font-bold hover:bg-red-700 ml-2"
-                      onClick={() => handleDelete(v.category)}
-                    >Delete</button>
+          <h2 className="text-xl font-bold mb-4">All Categories</h2>
+          <div className="space-y-7">
+            {categories.length === 0 && <span>No categories found.</span>}
+            {categories.map((cat, catIdx) => (
+              <div key={cat.category} className="mb-2 border-b border-gray-700 pb-2">
+                <div className="flex items-center gap-2 mb-2">
+                  {editingCatName === cat.category ? (
+                    <>
+                      <input
+                        className="p-1 rounded bg-gray-900 text-white border border-gray-600"
+                        value={editingCatName}
+                        onChange={e=>setEditingCatName(e.target.value)}
+                      />
+                      <button className="bg-blue-600 px-2 py-1 rounded ml-1" onClick={()=>renameCategory(catIdx)}>Save</button>
+                      <button className="bg-gray-600 px-2 py-1 rounded ml-1" onClick={()=>setEditingCatName(null)}>Cancel</button>
+                    </>
+                  ) : (
+                    <>
+                      <span className="font-semibold text-lg text-blue-300 cursor-pointer" onClick={()=>setSelectedCategoryIdx(catIdx)}>{cat.category}</span>
+                      <button className="bg-yellow-700 px-2 py-1 rounded text-sm ml-2" onClick={()=>setEditingCatName(cat.category)}>Rename</button>
+                      <button className="bg-red-700 px-2 py-1 rounded text-sm ml-2" onClick={()=>deleteCategory(catIdx)}>Delete</button>
+                    </>
                   )}
+                  <button className="ml-auto bg-blue-500 px-3 py-1 rounded text-sm font-bold" onClick={()=>saveCategory(catIdx)}>Save All Links</button>
                 </div>
-                <ul className="ml-4 list-disc">
-                  {(v.links?.links ?? []).map((link: string, idx: number) => (
-                    <li key={idx} className="break-all text-sm text-gray-200">{link}</li>
+                {/* Links */}
+                <ul className="pl-4">
+                  {(cat.links?.links || []).length === 0 && (
+                    <li className="text-gray-400">No links in this category.</li>
+                  )}
+                  {(cat.links?.links || []).map((link:string, linkIdx:number) => (
+                    <li key={linkIdx} className="flex items-center gap-2 mb-1">
+                      {linkEdits[catIdx]?.[linkIdx] !== undefined ? (
+                        <>
+                          <input
+                            className="p-1 rounded bg-gray-900 text-white border border-gray-600 w-full"
+                            value={linkEdits[catIdx][linkIdx]}
+                            onChange={e=>handleLinkEdit(catIdx, linkIdx, e.target.value)}
+                            placeholder="Edit link"
+                          />
+                          <button className="bg-blue-600 px-2 py-1 rounded text-sm" onClick={()=>saveLink(catIdx,linkIdx)}>Save</button>
+                          <button className="bg-gray-600 px-1 py-1 rounded text-sm" onClick={()=>setLinkEdits(edits => ({...edits,[catIdx]: {...edits[catIdx], [linkIdx]: undefined }}))}>Cancel</button>
+                        </>
+                      ) : (
+                        <>
+                          <a href={link} target="_blank" rel="noopener noreferrer" className="text-green-300 underline break-all w-full">{link}</a>
+                          <button className="bg-yellow-700 px-2 py-1 rounded text-xs ml-1" onClick={()=>handleLinkEdit(catIdx, linkIdx, link)}>Edit</button>
+                          <button className="bg-red-700 px-2 py-1 rounded text-xs ml-1" onClick={()=>deleteLink(catIdx, linkIdx)}>Delete</button>
+                        </>
+                      )}
+                    </li>
                   ))}
                 </ul>
+                {/* Add New Link */}
+                <AddLinkForm onAdd={l => addLink(catIdx,l)} />
               </div>
             ))}
           </div>
         </div>
       </div>
     </main>
+  );
+}
+
+//--- Add Link Form inline component ---
+function AddLinkForm({onAdd}:{onAdd:(link:string)=>void}) {
+  const [draft, setDraft] = useState("");
+  return (
+    <div className="flex mt-1 gap-2">
+      <input
+        type="text"
+        className="flex-1 p-1 rounded bg-gray-900 text-white border border-gray-600"
+        placeholder="New video link.."
+        value={draft}
+        onChange={e=>setDraft(e.target.value)}
+      />
+      <button className="bg-green-700 px-2 py-1 rounded text-xs font-bold" onClick={()=>{onAdd(draft);setDraft("");}}>Add Link</button>
+    </div>
   );
 }
