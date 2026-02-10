@@ -105,7 +105,13 @@ export default function AdminGallery() {
       body: JSON.stringify(cat)
     });
     setStatus("Link updated");
-    setLinkEdits(edits => ({ ...edits, [catIdx]: {...edits[catIdx], [linkIdx]: undefined } }));
+    setLinkEdits(edits => {
+  const updated = { ...edits };
+  const catEntry = { ...(updated[catIdx] || {}) };
+  delete catEntry[linkIdx];
+  updated[catIdx] = catEntry;
+  return updated;
+});
   }
 
   async function deleteLink(catIdx:number, linkIdx:number) {
