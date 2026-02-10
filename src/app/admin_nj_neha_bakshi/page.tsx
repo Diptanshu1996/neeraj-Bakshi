@@ -8,7 +8,7 @@ export default function AdminGallery() {
   const [newCatName, setNewCatName] = useState("");
   const [newCatLinks, setNewCatLinks] = useState("");
   const [editingCatName, setEditingCatName] = useState<string | null>(null);
-  const [linkEdits, setLinkEdits] = useState<{[catIdx:number]: {[linkIdx:number]: string}} | {}>({});
+  const [linkEdits, setLinkEdits] = useState<Record<number, Record<number, string>>>({});
 
   // Fetch initial categories
   useEffect(() => {
