@@ -4,13 +4,10 @@ import React, { useState, useEffect } from "react";
 export default function AdminGallery() {
   const [status, setStatus] = useState("");
   const [categories, setCategories] = useState<any[]>([]);
-  const [selectedCategoryIdx, setSelectedCategoryIdx] = useState<number>(-1);
   const [newCatName, setNewCatName] = useState("");
   const [newCatLinks, setNewCatLinks] = useState("");
   const [editingCatName, setEditingCatName] = useState<string | null>(null);
-  const [linkEdits, setLinkEdits] = useState<Record<number, Record<number, string>>>({});
-
-  // Fetch initial categories only once at mount and after actions
+  // Fetch initial categories on mount and after changes
   useEffect(() => {
     fetchGallery();
   }, []);
@@ -19,14 +16,9 @@ export default function AdminGallery() {
     const res = await fetch("/api/gallery");
     try {
       let arr = await res.json();
-      // Normalize categories structure: ensure each cat.links is a flat array
       arr = (Array.isArray(arr) ? arr : []).map((cat: any) => ({
         category: cat.category,
-        links: Array.isArray(cat.links)
-          ? cat.links
-          : Array.isArray(cat.links?.links)
-            ? cat.links.links
-            : [],
+        links: Array.isArray(cat.links) ? cat.links : Array.isArray(cat.links?.links) ? cat.links.links : [],
       }));
       setCategories(arr);
     } catch {
@@ -34,17 +26,21 @@ export default function AdminGallery() {
     }
   }
 
-  // --- CRUD Actions ---
-  async function saveCategory(catIdx:number) {
-    const cat = categories[catIdx];
-    if (!cat) return;
+  async function addCategory() {
+    if (!newCatName.trim()) return setStatus("Category name required");
+    const linksArr = newCatLinks.split(",").map(x=>x.trim()).filter(Boolean);
     const res = await fetch("/api/gallery", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({category: cat.category, links: cat.links})
+      body: JSON.stringify({category: newCatName, links: linksArr})
     });
-    setStatus(res.ok ? "Saved changes!" : "Failed to save");
-    if (res.ok) fetchGallery();
+    if (res.ok) {
+      setStatus("Category added!");
+      setNewCatName(""); setNewCatLinks("");
+      fetchGallery();
+    } else {
+      setStatus("Failed to add category");
+    }
   }
 
   async function deleteCategory(catIdx:number) {
@@ -58,22 +54,42 @@ export default function AdminGallery() {
     });
     if (res.ok) {
       setStatus("Category deleted!");
-      setSelectedCategoryIdx(-1);
       fetchGallery();
     } else setStatus("Failed to delete");
   }
 
-  async function addCategory() {
-    if (!newCatName.trim()) return setStatus("Category name required");
-    const linksArr = newCatLinks.split(",").map(x=>x.trim()).filter(Boolean);
+  async function addLink(catIdx:number, newLink:string) {
+    if (!newLink.trim()) return;
+    const cat = {...categories[catIdx]};
+    cat.links = [...(cat.links || []), newLink.trim()];
     const res = await fetch("/api/gallery", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({category: newCatName, links: linksArr})
+      body: JSON.stringify({category: cat.category, links: cat.links})
     });
-    setStatus(res.ok ? "Category added!" : "Failed to add category");
-    setNewCatName(""); setNewCatLinks("");
-    if (res.ok) fetchGallery();
+    if (res.ok) {
+      setStatus("Link added")
+      fetchGallery();
+    } else {
+      setStatus("Failed to add link");
+    }
+  }
+
+  async function deleteLink(catIdx:number, linkIdx:number) {
+    const cat = {...categories[catIdx]};
+    cat.links = [...cat.links];
+    cat.links.splice(linkIdx, 1);
+    const res = await fetch("/api/gallery", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({category: cat.category, links: cat.links})
+    });
+    if (res.ok) {
+      setStatus("Link deleted");
+      fetchGallery();
+    } else {
+      setStatus("Failed to delete link");
+    }
   }
 
   async function renameCategory(catIdx:number) {
@@ -95,66 +111,9 @@ export default function AdminGallery() {
     });
     setStatus("Category renamed");
     setEditingCatName(null);
-    setSelectedCategoryIdx(-1);
     fetchGallery();
   }
 
-  // ----- Per-link CRUD -----
-  function handleLinkEdit(catIdx:number, linkIdx:number, value:string) {
-    setLinkEdits(edits => ({
-      ...edits,
-      [catIdx]: {...(edits[catIdx] ?? {}), [linkIdx]: value },
-    }));
-  }
-
-  async function saveLink(catIdx:number, linkIdx:number) {
-    const editsCat = (linkEdits as any)[catIdx] || {};
-    if (!editsCat[linkIdx]) return;
-    const cat = {...categories[catIdx]};
-    cat.links[linkIdx] = editsCat[linkIdx];
-    await fetch("/api/gallery", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({category: cat.category, links: cat.links})
-    });
-    setStatus("Link updated");
-    setLinkEdits(edits => {
-      const updated = { ...edits };
-      const catEntry = { ...(updated[catIdx] || {}) };
-      delete catEntry[linkIdx];
-      updated[catIdx] = catEntry;
-      return updated;
-    });
-    fetchGallery();
-  }
-
-  async function deleteLink(catIdx:number, linkIdx:number) {
-    if (!window.confirm("Delete this link?")) return;
-    const cat = {...categories[catIdx]};
-    cat.links.splice(linkIdx, 1);
-    await fetch("/api/gallery", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({category: cat.category, links: cat.links})
-    });
-    setStatus("Link deleted");
-    fetchGallery();
-  }
-
-  async function addLink(catIdx:number, newLink:string) {
-    if (!newLink.trim()) return;
-    const cat = {...categories[catIdx]};
-    cat.links = [...(cat.links || []), newLink.trim()];
-    await fetch("/api/gallery", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({category: cat.category, links: cat.links})
-    });
-    setStatus("Link added");
-    fetchGallery();
-  }
-
-  // --- Render ---
   return (
     <main className="min-h-screen bg-gray-900 text-white flex flex-col items-center py-16 px-2">
       <h1 className="text-3xl font-bold mb-6">Admin: Gallery CRUD (JSON backend)</h1>
@@ -202,12 +161,11 @@ export default function AdminGallery() {
                     </>
                   ) : (
                     <>
-                      <span className="font-semibold text-lg text-blue-300 cursor-pointer" onClick={()=>setSelectedCategoryIdx(catIdx)}>{cat.category}</span>
+                      <span className="font-semibold text-lg text-blue-300 cursor-pointer" >{cat.category}</span>
                       <button className="bg-yellow-700 px-2 py-1 rounded text-sm ml-2" onClick={()=>setEditingCatName(cat.category)}>Rename</button>
                       <button className="bg-red-700 px-2 py-1 rounded text-sm ml-2" onClick={()=>deleteCategory(catIdx)}>Delete</button>
                     </>
                   )}
-                  <button className="ml-auto bg-blue-500 px-3 py-1 rounded text-sm font-bold" onClick={()=>saveCategory(catIdx)}>Save All Links</button>
                 </div>
                 {/* Links */}
                 <ul className="pl-4">
@@ -216,35 +174,13 @@ export default function AdminGallery() {
                   )}
                   {(cat.links || []).map((link:string, linkIdx:number) => (
                     <li key={linkIdx} className="flex items-center gap-2 mb-1">
-                      {linkEdits[catIdx]?.[linkIdx] !== undefined ? (
-                        <>
-                          <input
-                            className="p-1 rounded bg-gray-900 text-white border border-gray-600 w-full"
-                            value={linkEdits[catIdx][linkIdx]}
-                            onChange={e=>handleLinkEdit(catIdx, linkIdx, e.target.value)}
-                            placeholder="Edit link"
-                          />
-                          <button className="bg-blue-600 px-2 py-1 rounded text-sm" onClick={()=>saveLink(catIdx,linkIdx)}>Save</button>
-                          <button className="bg-gray-600 px-1 py-1 rounded text-sm" onClick={()=>setLinkEdits(edits => {
-                            const updated = { ...edits };
-                            const catEntry = { ...(updated[catIdx] || {}) };
-                            delete catEntry[linkIdx];
-                            updated[catIdx] = catEntry;
-                            return updated;
-                          })}>Cancel</button>
-                        </>
-                      ) : (
-                        <>
-                          <a href={link} target="_blank" rel="noopener noreferrer" className="text-green-300 underline break-all w-full">{link}</a>
-                          <button className="bg-yellow-700 px-2 py-1 rounded text-xs ml-1" onClick={()=>handleLinkEdit(catIdx, linkIdx, link)}>Edit</button>
-                          <button className="bg-red-700 px-2 py-1 rounded text-xs ml-1" onClick={()=>deleteLink(catIdx, linkIdx)}>Delete</button>
-                        </>
-                      )}
+                        <a href={link} target="_blank" rel="noopener noreferrer" className="text-green-300 underline break-all w-full">{link}</a>
+                        <button className="bg-red-700 px-2 py-1 rounded text-xs ml-1" onClick={()=>deleteLink(catIdx, linkIdx)}>Delete</button>
                     </li>
                   ))}
                 </ul>
                 {/* Add New Link */}
-                <AddLinkForm onAdd={l => addLink(catIdx,l)} />
+                <AddLinkForm onAdd={l => addLink(catIdx,l)}/>
               </div>
             ))}
           </div>
@@ -254,7 +190,6 @@ export default function AdminGallery() {
   );
 }
 
-//--- Add Link Form inline component ---
 function AddLinkForm({onAdd}:{onAdd:(link:string)=>void}) {
   const [draft, setDraft] = useState("");
   return (
