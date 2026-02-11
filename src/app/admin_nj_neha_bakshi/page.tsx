@@ -215,6 +215,7 @@ export default function AdminGallery() {
                     <li className="text-gray-400">No links in this category.</li>
                   )}
                   {(cat.links || []).map((link:string, linkIdx:number) => (
+                    <li key={linkIdx} className="flex items-center gap-2 mb-1">
                       {linkEdits[catIdx]?.[linkIdx] !== undefined ? (
                         <>
                           <input
@@ -225,12 +226,12 @@ export default function AdminGallery() {
                           />
                           <button className="bg-blue-600 px-2 py-1 rounded text-sm" onClick={()=>saveLink(catIdx,linkIdx)}>Save</button>
                           <button className="bg-gray-600 px-1 py-1 rounded text-sm" onClick={()=>setLinkEdits(edits => {
-  const updated = { ...edits };
-  const catEntry = { ...(updated[catIdx] || {}) };
-  delete catEntry[linkIdx];
-  updated[catIdx] = catEntry;
-  return updated;
-})}>Cancel</button>
+                            const updated = { ...edits };
+                            const catEntry = { ...(updated[catIdx] || {}) };
+                            delete catEntry[linkIdx];
+                            updated[catIdx] = catEntry;
+                            return updated;
+                          })}>Cancel</button>
                         </>
                       ) : (
                         <>
