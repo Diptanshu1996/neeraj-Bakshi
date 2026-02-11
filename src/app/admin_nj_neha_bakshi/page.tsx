@@ -178,7 +178,7 @@ export default function AdminGallery() {
                     <>
                       <input
                         className="p-1 rounded bg-gray-900 text-white border border-gray-600"
-                        value={editingCatName}
+                        value={editingCatName ?? ""}
                         onChange={e=>setEditingCatName(e.target.value)}
                       />
                       <button className="bg-blue-600 px-2 py-1 rounded ml-1" onClick={()=>renameCategory(catIdx)}>Save</button>
@@ -209,7 +209,13 @@ export default function AdminGallery() {
                             placeholder="Edit link"
                           />
                           <button className="bg-blue-600 px-2 py-1 rounded text-sm" onClick={()=>saveLink(catIdx,linkIdx)}>Save</button>
-                          <button className="bg-gray-600 px-1 py-1 rounded text-sm" onClick={()=>setLinkEdits(edits => ({...edits,[catIdx]: {...edits[catIdx], [linkIdx]: undefined }}))}>Cancel</button>
+                          <button className="bg-gray-600 px-1 py-1 rounded text-sm" onClick={()=>setLinkEdits(edits => {
+  const updated = { ...edits };
+  const catEntry = { ...(updated[catIdx] || {}) };
+  delete catEntry[linkIdx];
+  updated[catIdx] = catEntry;
+  return updated;
+})}>Cancel</button>
                         </>
                       ) : (
                         <>
