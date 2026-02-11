@@ -10,16 +10,25 @@ export default function AdminGallery() {
   const [editingCatName, setEditingCatName] = useState<string | null>(null);
   const [linkEdits, setLinkEdits] = useState<Record<number, Record<number, string>>>({});
 
-  // Fetch initial categories
+  // Fetch initial categories only once at mount and after actions
   useEffect(() => {
     fetchGallery();
-  }, [status]);
+  }, []);
 
   async function fetchGallery() {
     const res = await fetch("/api/gallery");
     try {
-      const arr = await res.json();
-      setCategories(Array.isArray(arr) ? arr : []);
+      let arr = await res.json();
+      // Normalize categories structure: ensure each cat.links is a flat array
+      arr = (Array.isArray(arr) ? arr : []).map((cat: any) => ({
+        category: cat.category,
+        links: Array.isArray(cat.links)
+          ? cat.links
+          : Array.isArray(cat.links?.links)
+            ? cat.links.links
+            : [],
+      }));
+      setCategories(arr);
     } catch {
       setCategories([]);
     }
@@ -32,9 +41,10 @@ export default function AdminGallery() {
     const res = await fetch("/api/gallery", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(cat)
+      body: JSON.stringify({category: cat.category, links: cat.links})
     });
     setStatus(res.ok ? "Saved changes!" : "Failed to save");
+    if (res.ok) fetchGallery();
   }
 
   async function deleteCategory(catIdx:number) {
@@ -49,6 +59,7 @@ export default function AdminGallery() {
     if (res.ok) {
       setStatus("Category deleted!");
       setSelectedCategoryIdx(-1);
+      fetchGallery();
     } else setStatus("Failed to delete");
   }
 
@@ -58,10 +69,11 @@ export default function AdminGallery() {
     const res = await fetch("/api/gallery", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({category: newCatName, links: {links: linksArr}})
+      body: JSON.stringify({category: newCatName, links: linksArr})
     });
     setStatus(res.ok ? "Category added!" : "Failed to add category");
     setNewCatName(""); setNewCatLinks("");
+    if (res.ok) fetchGallery();
   }
 
   async function renameCategory(catIdx:number) {
@@ -70,11 +82,11 @@ export default function AdminGallery() {
       setEditingCatName(null); return;
     }
     // create new, copy links, delete old
-    const linksArr = (cat.links?.links ?? []);
+    const linksArr = cat.links ?? [];
     await fetch("/api/gallery", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({category: editingCatName, links: {links: linksArr}})
+      body: JSON.stringify({category: editingCatName, links: linksArr})
     });
     await fetch("/api/gallery", {
       method: "POST",
@@ -84,6 +96,7 @@ export default function AdminGallery() {
     setStatus("Category renamed");
     setEditingCatName(null);
     setSelectedCategoryIdx(-1);
+    fetchGallery();
   }
 
   // ----- Per-link CRUD -----
@@ -98,44 +111,47 @@ export default function AdminGallery() {
     const editsCat = (linkEdits as any)[catIdx] || {};
     if (!editsCat[linkIdx]) return;
     const cat = {...categories[catIdx]};
-    cat.links.links[linkIdx] = editsCat[linkIdx];
+    cat.links[linkIdx] = editsCat[linkIdx];
     await fetch("/api/gallery", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(cat)
+      body: JSON.stringify({category: cat.category, links: cat.links})
     });
     setStatus("Link updated");
     setLinkEdits(edits => {
-  const updated = { ...edits };
-  const catEntry = { ...(updated[catIdx] || {}) };
-  delete catEntry[linkIdx];
-  updated[catIdx] = catEntry;
-  return updated;
-});
+      const updated = { ...edits };
+      const catEntry = { ...(updated[catIdx] || {}) };
+      delete catEntry[linkIdx];
+      updated[catIdx] = catEntry;
+      return updated;
+    });
+    fetchGallery();
   }
 
   async function deleteLink(catIdx:number, linkIdx:number) {
     if (!window.confirm("Delete this link?")) return;
     const cat = {...categories[catIdx]};
-    cat.links.links.splice(linkIdx, 1);
+    cat.links.splice(linkIdx, 1);
     await fetch("/api/gallery", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(cat)
+      body: JSON.stringify({category: cat.category, links: cat.links})
     });
     setStatus("Link deleted");
+    fetchGallery();
   }
 
   async function addLink(catIdx:number, newLink:string) {
     if (!newLink.trim()) return;
     const cat = {...categories[catIdx]};
-    cat.links.links.push(newLink.trim());
+    cat.links = [...(cat.links || []), newLink.trim()];
     await fetch("/api/gallery", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(cat)
+      body: JSON.stringify({category: cat.category, links: cat.links})
     });
     setStatus("Link added");
+    fetchGallery();
   }
 
   // --- Render ---
@@ -195,11 +211,10 @@ export default function AdminGallery() {
                 </div>
                 {/* Links */}
                 <ul className="pl-4">
-                  {(cat.links?.links || []).length === 0 && (
+                  {(cat.links || []).length === 0 && (
                     <li className="text-gray-400">No links in this category.</li>
                   )}
-                  {(cat.links?.links || []).map((link:string, linkIdx:number) => (
-                    <li key={linkIdx} className="flex items-center gap-2 mb-1">
+                  {(cat.links || []).map((link:string, linkIdx:number) => (
                       {linkEdits[catIdx]?.[linkIdx] !== undefined ? (
                         <>
                           <input
