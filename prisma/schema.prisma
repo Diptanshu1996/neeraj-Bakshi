@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum LeadStatus {
+  new
+  followed
+}
+
+enum TestimonialStatus {
+  pending
+  approved
+}
+
+model BookingLead {
+  id            String     @id @default(cuid())
+  name          String
+  email         String
+  phone         String
+  event         String
+  eventDate     String
+  eventLocation String
+  budget        String
+  message       String
+  leadStatus    LeadStatus @default(new)
+  called        Boolean    @default(false)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model GalleryCategory {
+  id        Int           @id @default(autoincrement())
+  category  String        @unique
+  imageUrl  String?
+  links     GalleryLink[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model GalleryLink {
+  id         Int             @id @default(autoincrement())
+  url        String
+  categoryId Int
+  category   GalleryCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, url])
+}
+
+model PerformanceHighlight {
+  id         String   @id @default(cuid())
+  title      String
+  youtubeUrl String
+  thumbnail  String   @default("")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Testimonial {
+  id        String            @id @default(cuid())
+  name      String
+  role      String
+  text      String
+  rating    Int               @default(5)
+  status    TestimonialStatus @default(pending)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+}
+
+model PhotoGalleryImage {
+  id        String   @id @default(cuid())
+  url       String
+  caption   String   @default("")
+  createdAt DateTime @default(now())
+}

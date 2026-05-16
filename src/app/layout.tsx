@@ -1,9 +1,11 @@
 
 
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "../components/Navbar";
+import GlobalPageLoader from "../components/GlobalPageLoader";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFacebook, faInstagram, faYoutube } from "@fortawesome/free-brands-svg-icons";
 
@@ -47,6 +49,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         transform: 'translateX(-50%)',
       }} />
         <Navbar />
+        <Suspense fallback={null}>
+          <GlobalPageLoader />
+        </Suspense>
         {children}
         <footer className="w-full bg-gray-950 text-white py-8 px-4">
           <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
@@ -55,7 +60,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               <a href="/" className="hover:underline">Home</a>
               <a href="/#about-me" className="hover:underline">About Us</a>
               <a href="/gallery" className="hover:underline">Gallery</a>
-              <a href="/booking" className="hover:underline">Booking</a>
+              <a href="/?book=1" className="hover:underline">Book Now</a>
             </div>
             <div className="flex gap-4">
               <a href="https://www.facebook.com/singeperformerrneerajbakshi" className="bg-black text-white text-2xl rounded-full p-2 shadow hover:scale-110 transition-transform duration-200" aria-label="Facebook Page" target="_blank" rel="noopener noreferrer">
